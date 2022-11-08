@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -43,8 +44,20 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newUser)
 }
 
-func GetOneUser() {
+func GetOneUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Get one course")
+	w.Header().Set("Content-Type", "application/json")
 
+	// grab id from request
+	params := mux.Vars(r)
+	idInInterger, _ := strconv.Atoi(params["id"])
+	for _, user := range users {
+		if user.Id == idInInterger {
+			json.NewEncoder(w).Encode(user)
+			return
+		}
+	}
+	json.NewEncoder(w).Encode("No User found with given id")
 }
 
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
@@ -54,8 +67,20 @@ func GetAllUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func DeleteUser() {
-
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Delete a user")
+	w.Header().Set("Content-Type", "applicatioan/json")
+	// grab id from request
+	params := mux.Vars(r)
+	idInInterger, _ := strconv.Atoi(params["id"])
+	for i, user := range users {
+		if user.Id == idInInterger {
+			users = append(users[:i], users[i+1:]...)
+			json.NewEncoder(w).Encode(user)
+			return
+		}
+	}
+	json.NewEncoder(w).Encode("No User found with given id")
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,5 +95,7 @@ func main() {
 	r.HandleFunc("/", HomeHandler).Methods("GET")
 	r.HandleFunc("/user", GetAllUser).Methods("GET")
 	r.HandleFunc("/user", CreateUser).Methods("POST")
+	r.HandleFunc("/user/{id}", GetOneUser).Methods("GET")
+	r.HandleFunc("/user/{id}", DeleteUser).Methods("DELETE")
 	log.Fatal(http.ListenAndServe("localhost:8000", r))
 }
